@@ -1,0 +1,8 @@
+
+.env*
+
+*_test.go
+
+docs/
+
+*.log
