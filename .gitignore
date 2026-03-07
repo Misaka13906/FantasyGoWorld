@@ -1,0 +1,9 @@
+
+# doc
+docs/reference
+
+# 敏感配置
+*.env*
+
+# 临时文件
+*/ignore/*
