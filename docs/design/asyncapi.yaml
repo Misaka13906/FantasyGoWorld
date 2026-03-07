@@ -1,0 +1,432 @@
+asyncapi: 2.6.0
+info:
+  title: FantasyGoWorld WebSocket API
+  version: 1.0.0
+  description: 围棋对弈平台 WebSocket 实时通信协议，包含大厅及房间内的双向通信流。
+servers:
+  fantasyGoWorld:
+    url: ws://{host}:{port}/api/v1/ws
+    protocol: ws
+    variables:
+      host:
+        default: localhost
+        description: API Server Host
+      port:
+        default: "8080"
+        description: API Server Port
+
+channels:
+  /:
+    description: 统一的单一 WebSocket 连接信道，携带大厅及对战消息。
+    subscribe:
+      summary: 服务器向客户端推送的消息 (S->C)
+      message:
+        oneOf:
+          - $ref: '#/components/messages/SyncBoard'
+          - $ref: '#/components/messages/GameStart'
+          - $ref: '#/components/messages/GameEnd'
+          - $ref: '#/components/messages/MemberUpdate'
+          - $ref: '#/components/messages/LobbyUpdate'
+          - $ref: '#/components/messages/Notification'
+          - $ref: '#/components/messages/ErrorMsg'
+          - $ref: '#/components/messages/Proposal'
+    publish:
+      summary: 客户端发往服务器的指令 (C->S)
+      message:
+        oneOf:
+          - $ref: '#/components/messages/Heartbeat'
+          - $ref: '#/components/messages/JoinRoom'
+          - $ref: '#/components/messages/LeaveRoom'
+          - $ref: '#/components/messages/Invite'
+          - $ref: '#/components/messages/InviteReply'
+          - $ref: '#/components/messages/Proposal'
+          - $ref: '#/components/messages/Move'
+          - $ref: '#/components/messages/Pass'
+          - $ref: '#/components/messages/Resign'
+          - $ref: '#/components/messages/Chat'
+
+components:
+  schemas:
+    BaseEnvelope:
+      type: object
+      required: [type, timestamp]
+      properties:
+        type:
+          type: string
+          description: 指令类型 (大写英文字母及下划线)
+        seq:
+          type: integer
+          description: 递增序列号，主要用于防止指令乱序
+        room_id:
+          type: string
+          description: UUID，空字符串表示属于全局大厅层面
+        timestamp:
+          type: integer
+          format: int64
+          description: Unix 毫秒时间戳
+
+    # --- Client Definitions ---
+    InvitePayload:
+      type: object
+      required: [target_uid, room_id]
+      properties:
+        target_uid:
+          type: integer
+        room_id:
+          type: integer
+          
+    InviteReplyPayload:
+      type: object
+      required: [invite_uid, accept]
+      properties:
+        invite_uid:
+          type: integer
+        accept:
+          type: boolean
+          
+    ProposalPayload:
+      type: object
+      required: [action, target_uid, config]
+      properties:
+        action:
+          type: string
+          enum: [propose, accept, reject, counter]
+        target_uid:
+          type: integer
+        config:
+          type: object
+          properties:
+            board_size:
+              type: integer
+              description: 棋盘路数，如 19/13/9。P1阶段支持任意常规正方形(如 N=5~25)，后期迭代可能支持异形。
+            komi:
+              type: number
+            rule_type:
+              type: integer
+              description: 0=中国 1=日本
+            time_system:
+              type: string
+              enum: [byoyomi, absolute]
+            main_time_seconds:
+              type: integer
+            byoyomi_periods:
+              type: integer
+            byoyomi_seconds:
+              type: integer
+            plays_black_id:
+              type: integer
+              description: 0=随机, 否则为指定的 UID
+              
+    MovePayload:
+      type: object
+      required: [x, y, step]
+      properties:
+        x:
+          type: integer
+        y:
+          type: integer
+        step:
+          type: integer
+
+    ChatPayload:
+      type: object
+      required: [content]
+      properties:
+        content:
+          type: string
+          
+    # --- Server Definitions ---
+    SyncBoardPayload:
+      type: object
+      required: [board, next_turn, timers, seq]
+      properties:
+        board:
+          type: array
+          items:
+            type: array
+            items:
+              type: integer
+              description: 0=空 1=黑 2=白
+        next_turn:
+          type: string
+          enum: [black, white]
+        last_move:
+          type: object
+          properties:
+            x:
+              type: integer
+            y:
+              type: integer
+            step:
+              type: integer
+        timers:
+          type: object
+          properties:
+            black:
+              type: object
+              properties:
+                remaining_ms: {type: integer}
+                byoyomi_count: {type: integer}
+            white:
+              type: object
+              properties:
+                remaining_ms: {type: integer}
+                byoyomi_count: {type: integer}
+        seq:
+          type: integer
+
+    GameStartPayload:
+      type: object
+      required: [game_id, black_uid, white_uid, config]
+      properties:
+        game_id:
+          type: integer
+        black_uid:
+          type: integer
+        white_uid:
+          type: integer
+        config:
+          type: object
+          description: 对局完整配置
+
+    GameEndPayload:
+      type: object
+      required: [end_type, score_diff, elo_delta]
+      properties:
+        winner_uid:
+          type: integer
+          nullable: true
+          description: 若平局为 null
+        end_type:
+          type: string
+          enum: [counting, resignation, timeout, disconnection_forfeit]
+        score_diff:
+          type: number
+        elo_delta:
+          type: object
+          properties:
+            black: {type: integer}
+            white: {type: integer}
+
+    MemberUpdatePayload:
+      type: object
+      properties:
+        members:
+          type: array
+          items:
+            type: object
+            properties:
+              uid: {type: integer}
+              nickname: {type: string}
+              elo: {type: integer}
+              status:
+                type: string
+                enum: [player, spectator]
+
+    LobbyUpdatePayload:
+      type: object
+      properties:
+        users_add:
+          type: array
+          items:
+            type: object
+            description: OnlineUserEntry
+        users_remove:
+          type: array
+          items: {type: integer}
+        rooms_add:
+          type: array
+          items:
+            type: object
+            description: RoomEntry
+        rooms_remove:
+          type: array
+          items: {type: string}
+
+    NotificationPayload:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [info, warning, invite_rejected]
+        message:
+          type: string
+          
+    ErrorPayload:
+      type: object
+      properties:
+        code:
+          type: integer
+        message:
+          type: string
+
+
+  messages:
+    # --- Bi-Directional ---
+    Proposal:
+      title: PROPOSAL
+      payload:
+        allOf:
+          - $ref: '#/components/schemas/BaseEnvelope'
+          - type: object
+            properties:
+              type: {type: string, const: PROPOSAL}
+              payload: {$ref: '#/components/schemas/ProposalPayload'}
+
+    # --- Client Messages ---
+    Heartbeat:
+      title: HEARTBEAT
+      payload:
+        allOf:
+          - $ref: '#/components/schemas/BaseEnvelope'
+          - type: object
+            properties:
+              type: {type: string, const: HEARTBEAT}
+              
+    JoinRoom:
+      title: JOIN_ROOM
+      payload:
+        allOf:
+          - $ref: '#/components/schemas/BaseEnvelope'
+          - type: object
+            properties:
+              type: {type: string, const: JOIN_ROOM}
+              
+    LeaveRoom:
+      title: LEAVE_ROOM
+      payload:
+        allOf:
+          - $ref: '#/components/schemas/BaseEnvelope'
+          - type: object
+            properties:
+              type: {type: string, const: LEAVE_ROOM}
+              
+    Invite:
+      title: INVITE
+      payload:
+        allOf:
+          - $ref: '#/components/schemas/BaseEnvelope'
+          - type: object
+            properties:
+              type: {type: string, const: INVITE}
+              payload: {$ref: '#/components/schemas/InvitePayload'}
+              
+    InviteReply:
+      title: INVITE_REPLY
+      payload:
+        allOf:
+          - $ref: '#/components/schemas/BaseEnvelope'
+          - type: object
+            properties:
+              type: {type: string, const: INVITE_REPLY}
+              payload: {$ref: '#/components/schemas/InviteReplyPayload'}
+
+    Move:
+      title: MOVE
+      payload:
+        allOf:
+          - $ref: '#/components/schemas/BaseEnvelope'
+          - type: object
+            properties:
+              type: {type: string, const: MOVE}
+              payload: {$ref: '#/components/schemas/MovePayload'}
+              
+    Pass:
+      title: PASS
+      payload:
+        allOf:
+          - $ref: '#/components/schemas/BaseEnvelope'
+          - type: object
+            properties:
+              type: {type: string, const: PASS}
+              
+    Resign:
+      title: RESIGN
+      payload:
+        allOf:
+          - $ref: '#/components/schemas/BaseEnvelope'
+          - type: object
+            properties:
+              type: {type: string, const: RESIGN}
+              
+    Chat:
+      title: CHAT
+      payload:
+        allOf:
+          - $ref: '#/components/schemas/BaseEnvelope'
+          - type: object
+            properties:
+              type: {type: string, const: CHAT}
+              payload: {$ref: '#/components/schemas/ChatPayload'}
+
+
+    # --- Server Messages ---
+    SyncBoard:
+      title: SYNC_BOARD
+      payload:
+        allOf:
+          - $ref: '#/components/schemas/BaseEnvelope'
+          - type: object
+            properties:
+              type: {type: string, const: SYNC_BOARD}
+              payload: {$ref: '#/components/schemas/SyncBoardPayload'}
+
+    GameStart:
+      title: GAME_START
+      payload:
+        allOf:
+          - $ref: '#/components/schemas/BaseEnvelope'
+          - type: object
+            properties:
+              type: {type: string, const: GAME_START}
+              payload: {$ref: '#/components/schemas/GameStartPayload'}
+              
+    GameEnd:
+      title: GAME_END
+      payload:
+        allOf:
+          - $ref: '#/components/schemas/BaseEnvelope'
+          - type: object
+            properties:
+              type: {type: string, const: GAME_END}
+              payload: {$ref: '#/components/schemas/GameEndPayload'}
+              
+    MemberUpdate:
+      title: MEMBER_UPDATE
+      payload:
+        allOf:
+          - $ref: '#/components/schemas/BaseEnvelope'
+          - type: object
+            properties:
+              type: {type: string, const: MEMBER_UPDATE}
+              payload: {$ref: '#/components/schemas/MemberUpdatePayload'}
+
+    LobbyUpdate:
+      title: LOBBY_UPDATE
+      payload:
+        allOf:
+          - $ref: '#/components/schemas/BaseEnvelope'
+          - type: object
+            properties:
+              type: {type: string, const: LOBBY_UPDATE}
+              payload: {$ref: '#/components/schemas/LobbyUpdatePayload'}
+              
+    Notification:
+      title: NOTIFICATION
+      payload:
+        allOf:
+          - $ref: '#/components/schemas/BaseEnvelope'
+          - type: object
+            properties:
+              type: {type: string, const: NOTIFICATION}
+              payload: {$ref: '#/components/schemas/NotificationPayload'}
+              
+    ErrorMsg:
+      title: ERROR
+      payload:
+        allOf:
+          - $ref: '#/components/schemas/BaseEnvelope'
+          - type: object
+            properties:
+              type: {type: string, const: ERROR}
+              payload: {$ref: '#/components/schemas/ErrorPayload'}

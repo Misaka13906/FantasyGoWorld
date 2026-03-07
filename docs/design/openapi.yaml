@@ -1,0 +1,622 @@
+openapi: 3.0.3
+info:
+  title: FantasyGoWorld REST API
+  version: 1.0.0
+  description: >
+    围棋对弈平台 REST API 文档。
+    
+    采用 OpenAPI 3.0 标准定义。
+    所有的接口统一返回 `{"code": 20000, "msg": "success", "data": ...}` 格式，此处为了清晰表达业务模型，部分路由中仅聚焦展示 `data` 层的结构，或者直接声明标准响应体包装层。
+servers:
+  - url: /api/v1
+    description: 主路由前缀
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: 大部分接口需要在 Header 中携带 `Authorization: Bearer <access_token>`
+
+  schemas:
+    BaseResponse:
+      type: object
+      properties:
+        code:
+          type: integer
+          example: 20000
+        msg:
+          type: string
+          example: success
+      required:
+        - code
+        - msg
+        
+    ErrorResponse:
+      type: object
+      properties:
+        code:
+          type: integer
+          example: 40001
+        msg:
+          type: string
+          example: invalid parameters
+        data:
+          nullable: true
+          example: null
+
+  responses:
+    BadRequest:
+      description: 请求参数错误或业务校验失败 (400xx)
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            code: 40001
+            msg: "request does not satisfy requirements"
+            data: null
+
+    Unauthorized:
+      description: 未经授权 (401xx)
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            code: 40100
+            msg: "unauthorized"
+            data: null
+
+    Forbidden:
+      description: 权限不足 (403xx)
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            code: 40300
+            msg: "forbidden"
+            data: null
+
+    NotFound:
+      description: 资源不存在 (404xx)
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            code: 40400
+            msg: "resource not found"
+            data: null
+
+    InternalError:
+      description: 服务端内部错误 (500xx)
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            code: 50001
+            msg: "internal server error"
+            data: null
+
+    # --- Auth ---
+    RegisterReq:
+      type: object
+      required: [username, password, nickname, rank]
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+        nickname:
+          type: string
+        rank:
+          type: string
+          example: 18K
+          
+    LoginReq:
+      type: object
+      required: [username, password]
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+          
+    TokenResponse:
+      type: object
+      properties:
+        access_token:
+          type: string
+
+    # --- User ---
+    UserPublicInfo:
+      type: object
+      properties:
+        id:
+          type: integer
+        nickname:
+          type: string
+        rank:
+          type: string
+        elo:
+          type: integer
+        avatar_url:
+          type: string
+        status:
+          type: string
+          enum: [idle, gaming, dnd]
+          
+    UserProfileUpdate:
+      type: object
+      properties:
+        nickname:
+          type: string
+        bio:
+          type: string
+        avatar_url:
+          type: string
+          
+    UserPreferences:
+      type: object
+      properties:
+        dnd:
+          type: boolean
+        theme:
+          type: string
+        board_theme:
+          type: string
+        greetings:
+          type: array
+          items:
+            type: string
+
+    OnlineUserEntry:
+      type: object
+      properties:
+        id:
+          type: integer
+        nickname:
+          type: string
+        elo:
+          type: integer
+        status:
+          type: string
+
+    # --- Room ---
+    RoomCreateReq:
+      type: object
+      properties:
+        description:
+          type: string
+        is_public:
+          type: boolean
+        password:
+          type: string
+          
+    RoomEntry:
+      type: object
+      properties:
+        id:
+          type: integer
+        owner_id:
+          type: integer
+        description:
+          type: string
+        is_public:
+          type: boolean
+        status:
+          type: integer
+          description: 0=等待 1=进行中 2=结束
+
+    # --- Game ---
+    GameRecord:
+      type: object
+      properties:
+        id:
+          type: integer
+        black_user_id:
+          type: integer
+        white_user_id:
+          type: integer
+        winner_id:
+          type: integer
+        end_type:
+          type: string
+        score_diff:
+          type: number
+
+paths:
+  /auth/register:
+    post:
+      tags: [Auth]
+      summary: 用户注册
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterReq'
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/BaseResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /auth/login:
+    post:
+      tags: [Auth]
+      summary: 用户登录
+      description: 登录成功返回 access_token，同时在响应头设置 httpOnly 的 refresh_token Cookie。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginReq'
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/BaseResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/TokenResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /auth/refresh:
+    post:
+      tags: [Auth]
+      summary: 刷新 Token
+      description: 依靠请求自带的 refresh_token Cookie 获取新的 access_token。
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/BaseResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/TokenResponse'
+
+  /auth/logout:
+    post:
+      tags: [Auth]
+      security:
+        - bearerAuth: []
+      summary: 用户登出
+      description: 清除后端的 Session 映射，并要求浏览器清除对应 Cookie。
+      responses:
+        '200':
+          description: 成功
+
+  /user/{uid}:
+    get:
+      tags: [User]
+      security:
+        - bearerAuth: []
+      summary: 获取用户公开信息
+      parameters:
+        - name: uid
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/BaseResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/UserPublicInfo'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /user:
+    put:
+      tags: [User]
+      security:
+        - bearerAuth: []
+      summary: 更新当前用户资料
+      description: 仅更新 nickname, bio, avatar_url 等基础资料。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserProfileUpdate'
+      responses:
+        '200':
+          description: 成功
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /user/preferences:
+    get:
+      tags: [User]
+      security:
+        - bearerAuth: []
+      summary: 获取偏好设置
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/BaseResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/UserPreferences'
+    put:
+      tags: [User]
+      security:
+        - bearerAuth: []
+      summary: 覆盖更新偏好设置
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserPreferences'
+      responses:
+        '200':
+          description: 成功
+
+  /user/list:
+    get:
+      tags: [User]
+      security:
+        - bearerAuth: []
+      summary: 获取在线用户列表（用于大厅）
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/BaseResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/OnlineUserEntry'
+                          
+  /user/search:
+    get:
+      tags: [User]
+      security:
+        - bearerAuth: []
+      summary: 按名称搜索用户
+      parameters:
+        - name: username
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/BaseResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/UserPublicInfo'
+
+  /user/{uid}/games:
+    get:
+      tags: [User]
+      security:
+        - bearerAuth: []
+      summary: 获取某用户的对局历史
+      parameters:
+        - name: uid
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/BaseResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/GameRecord'
+
+  /room:
+    post:
+      tags: [Room]
+      security:
+        - bearerAuth: []
+      summary: 创建房间
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RoomCreateReq'
+      responses:
+        '200':
+          description: 成功，返回房间 ID 和详情
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/BaseResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/RoomEntry'
+
+  /room/list:
+    get:
+      tags: [Room]
+      security:
+        - bearerAuth: []
+      summary: 获取公开房间列表
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/BaseResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/RoomEntry'
+
+  /room/{roomId}:
+    get:
+      tags: [Room]
+      security:
+        - bearerAuth: []
+      summary: 获取单个房间详情
+      parameters:
+        - name: roomId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/BaseResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/RoomEntry'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    delete:
+      tags: [Room]
+      security:
+        - bearerAuth: []
+      summary: 关闭房间
+      description: 仅房主可操作
+      parameters:
+        - name: roomId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: 成功
+
+  /game/{gameId}:
+    get:
+      tags: [Game]
+      security:
+        - bearerAuth: []
+      summary: 获取对局结算详情
+      parameters:
+        - name: gameId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/BaseResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/GameRecord'
+
+  /game/{gameId}/sgf:
+    get:
+      tags: [Game]
+      security:
+        - bearerAuth: []
+      summary: 下载对局 SGF 文件
+      description: 不返回 JSON，直接返回 text/sgf 格式内容以便浏览器下载。
+      parameters:
+        - name: gameId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: SGF 文件内容
+          content:
+            text/sgf:
+              schema:
+                type: string
