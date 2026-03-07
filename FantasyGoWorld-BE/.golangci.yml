@@ -1,0 +1,95 @@
+# .golangci.yml
+# 项目全量 Lint 配置文件
+# 遵循 Uber Go Style Guide 及项目自定义规范
+
+run:
+  timeout: 5m
+  modules-download-mode: readonly
+  go: '1.22'
+
+linters-settings:
+  govet:
+    # 启用所有检查，包括锁同步等
+    enable-all: true
+    settings:
+      printf:
+        funcs:
+          - (github.com/golangci/golangci-lint/pkg/logutils.Log).Infof
+          - (github.com/golangci/golangci-lint/pkg/logutils.Log).Warnf
+          - (github.com/golangci/golangci-lint/pkg/logutils.Log).Errorf
+          - (github.com/golangci/golangci-lint/pkg/logutils.Log).Fatalf
+  
+  revive:
+    # 替换 golint，检查命名、文档注释、导出实体等
+    rules:
+      - name: blank-imports
+      - name: context-as-first-argument
+      - name: dot-imports
+      - name: error-return
+      - name: error-strings
+      - name: error-naming
+      - name: exported
+      - name: if-return
+      - name: increment-decrement
+      - name: var-naming
+      - name: var-declaration
+      - name: package-comments
+      - name: range
+      - name: receiver-naming
+      - name: time-naming
+      - name: unexported-return
+      - name: indent-error-flow
+      - name: errorf
+      - name: empty-block
+      - name: superhuman
+      - name: unexported-naming
+        # 遵循项目规范：未导出全局变量以 _ 开头
+        # 注意：这是自定义程度较高的规则，revive 目前可能需要额外插件实现
+        # 这里先保留标准 revive 配置
+
+  gocritic:
+    enabled-tags:
+      - diagnostic
+      - style
+      - performance
+    disabled-checks:
+      - wrapperFunc
+      - rangeValCopy
+
+  errcheck:
+    # 强制检查错误返回
+    check-type-assertions: true
+    check-blank: true
+
+  staticcheck:
+    # 启用 staticcheck 的所有推荐检查
+    checks: ["all"]
+
+linters:
+  disable-all: true
+  enable:
+    - errcheck
+    - gosimple
+    - govet
+    - ineffassign
+    - staticcheck
+    - typecheck
+    - unused
+    - revive
+    - gocritic
+    - gofmt
+    - goimports
+    - misspell
+
+issues:
+  # 排除 vendor 目录
+  exclude-dirs:
+    - vendor
+  # 限制每个文件的 issue 数量
+  max-issues-per-linter: 0
+  max-same-issues: 0
+
+output:
+  sort-results: true
+  print-issued-lines: true
+  print-linter-name: true
