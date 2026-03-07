@@ -18,18 +18,18 @@
 > 目标：空项目能跑起来，基础框架就位
 
 ```
-[ ] 初始化 Go 模块（go mod init）
-[ ] 搭建目录结构（cmd/ internal/ pkg/ migrations/）
-[ ] config.yaml 加载（viper）
-[ ] MySQL 连接初始化（GORM）
-[ ] Redis 连接初始化（go-redis）
-[ ] Gin 路由基础框架（router.go，含 CORS、health check /ping）
-[ ] 统一响应封装（pkg/response）
-[ ] 统一错误码定义（pkg/e）
-[ ] JWT 工具（pkg/jwt：生成/解析 access + refresh token）
-[ ] 数据库初始化文件（migrations/001_init.sql）
-[ ] 前端：初始化 Vite + React + TypeScript 项目
-[ ] 前端：配置 axios instance（pkg/api/http.ts，含拦截器）
+[x] 初始化 Go 模块（go mod init）
+[x] 搭建目录结构（cmd/ internal/ pkg/ migrations/）
+[x] config.yaml 加载（viper）
+[x] MySQL 连接初始化（GORM）
+[x] Redis 连接初始化（go-redis）
+[x] Gin 路由基础框架（router.go，含 CORS、health check /ping）
+[x] 统一响应封装（pkg/response）
+[x] 统一错误码定义（pkg/e）
+[x] JWT 工具（pkg/jwtauth：生成/解析 access + refresh token）
+[x] 数据库初始化文件（migrations/001_init.sql）
+[x] 前端：初始化 Vite + React + TypeScript 项目
+[x] 前端：配置 axios instance（pkg/api/http.ts，含拦截器）
 ```
 
 ---

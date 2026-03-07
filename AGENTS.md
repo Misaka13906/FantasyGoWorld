@@ -4,6 +4,18 @@
 
 ---
 
+## 🚫 严禁脑补协议 (Anti-Hallucination Protocol)
+
+作为 Agent，你**严禁**基于通用训练数据猜测本项目特有的 API 结构、字段名或错误码。**必须执行以下“两步走”策略**：
+
+1.  **研究阶段 (Mandatory Research)**：在任何代码改动前，必须使用 `view_file` 读取：
+    -   [`docs/design/api-spec.md`](docs/design/api-spec.md)（获取接口定义）
+    -   [`docs/design/data-schema.md`](docs/design/data-schema.md)（获取数据库定义）
+    -   [`docs/spec/specification.md`](docs/spec/specification.md)（获取框架习惯）
+2.  **严控输出 (Verification)**：如果文档中没有定义，**严禁自行发明**，必须先更新设计文档（或询问人类确认）后再编写代码。
+
+---
+
 ## ⚡ 每次任务开始前必须过的 Checklist
 
 > 完整工作流规范见 [`docs/spec/specification.md`](docs/spec/specification.md)，以下为内联摘要，**开始任何代码工作前先确认这几条**。
@@ -11,8 +23,8 @@
 - [ ] **涉及架构/技术选型变更**？→ 先读 [`docs/decision/log.md`](docs/decision/log.md)，确认没有提出已否决的方案
 - [ ] **开始新功能实现**？→ 先查 [`docs/decision/plan.md`](docs/decision/plan.md) 确认当前阶段和前置依赖是否就绪
 - [ ] **涉及接口或数据结构变更**？→ 先更新对应 `docs/design/` 文档，再写代码
-- [ ] **完成一个逻辑变更后**？→ 跑 `go test ./internal/...`，通过后立即 commit（不要堆积）
-- [ ] **改了 controller / middleware / router**？→ 还需跑接口测试（`httptest`）
+- [ ] **完成一个逻辑变更或脚手架搭建后**？→ **必须**运行 `go test ./...`。即便没有编写测试文件，也必须确保代码能通过编译且 `go mod tidy` 无错输出。
+- [ ] **涉及依赖变更**？→ **禁止**使用多个 `go get` 分次安装，统一使用 `go mod tidy` 进行依赖梳理和清理。
 - [ ] **commit message 格式**：`<type>(<scope>): <desc>`，例如 `feat(ws): inject roomInbound on JOIN_ROOM`
 
 如果你已确认上述原则已遵守，请在与人类对话的最结尾加上一句话：喵喵，已完成！

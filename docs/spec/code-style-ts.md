@@ -221,8 +221,29 @@ const state = useGameStore()
 | `React.FC` 泛型（过度使用） | 隐含 `children` 类型，语义不明确 | 直接写函数签名 + Props 类型 |
 
 ---
+ 
+## 7. 注释规范 (Annotation Standards)
 
-## 7. 工具链配置（待项目初始化时添加）
+- **组件与 Hook**：复杂的业务组件或逻辑 Hook 必须提供简要的 JSDoc，说明其核心职责。
+- **AI 友好型注释**：在非直观的副作用处理、复杂的 RxJS/Zustand 状态同步或特定的 UI 权衡处，**必须**使用结构化标签（详见 [`specification.md`](./specification.md#15-ai-辅助注释规范-ai-optimized-annotation)）。
+
+```tsx
+/**
+ * useGameTimer - 处理对局读秒逻辑
+ * @logic-hint: 
+ * 1. 优先使用本地时间差计算，每秒与后端 SYNC_BOARD 校准一次。
+ * 2. 读秒小于 10s 时触发音频预加载，防止网络延迟导致铃声卡顿。
+ */
+export const useGameTimer = (gameId: string) => {
+  // ...
+  // @ai-fix: 强制在卸载时 clearAll 所有的 window.requestAnimationFrame
+  useEffect(() => { ... }, []);
+}
+```
+
+---
+
+## 8. 工具链配置（待项目初始化时添加）
 
 ```
 eslint                    # 逻辑规则检查
