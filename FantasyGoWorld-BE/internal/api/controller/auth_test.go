@@ -45,7 +45,7 @@ func TestRegister(t *testing.T) {
 		"username": "testuser",
 		"password": "password123",
 		"nickname": "Test User",
-		"rank":   "18K",
+		"rank":     "18K",
 	}
 	jsonBody, _ := json.Marshal(body)
 

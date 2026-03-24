@@ -34,7 +34,10 @@ func TestJWT(t *testing.T) {
 	}
 
 	// Test Expired Token
-	expiredToken, _ := GenerateToken(uid, secret, -1)
+	expiredToken, err := GenerateToken(uid, secret, -1)
+	if err != nil {
+		t.Fatalf("GenerateToken failed for expired token: %v", err)
+	}
 	_, err = ParseToken(expiredToken, secret)
 	if err == nil {
 		t.Fatal("expected error for expired token, got nil")

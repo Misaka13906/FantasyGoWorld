@@ -64,20 +64,20 @@
 
 **后端**：
 ```
-[ ] GORM 模型（model/room.go）
-[ ] Repository 层（db/user.go 扩展：GetOnlineList；db/room.go：Create、List、GetByID、Delete）
-[ ] User Biz 层（biz/user.go）：GetProfile、UpdateProfile、GetOnlineList
-[ ] Room Biz 层（biz/room.go）：CreateRoom、ListPublicRooms、CloseRoom
-[ ] User Controller（/user）
-[ ] Room Controller（/room）
-[ ] 接口测试：GET /user/list、POST /room、GET /room/list
+[x] GORM 模型（model/room.go）
+[x] Repository 层（db/user.go 扩展：GetOnlineList；db/room.go：Create、List、GetByID、Delete）
+[x] User Biz 层（biz/user.go）：GetProfile、UpdateProfile、GetOnlineList
+[x] Room Biz 层（biz/room.go）：CreateRoom、ListPublicRooms、CloseRoom
+[x] User Controller（/user）
+[x] Room Controller（/room）
+[x] 接口测试：GET /user/list、POST /room、GET /room/list
 ```
 
 **前端**：
 ```
-[ ] LobbyStore（store/lobbyStore.ts）
-[ ] LobbyPage 骨架（HTTP 初始化数据，暂无 WS 推送）
-[ ] api/user.ts、api/room.ts
+[x] LobbyStore（store/lobbyStore.ts）
+[x] LobbyPage 骨架（HTTP 初始化数据，暂无 WS 推送）
+[x] api/user.ts、api/room.ts
 ```
 
 ---

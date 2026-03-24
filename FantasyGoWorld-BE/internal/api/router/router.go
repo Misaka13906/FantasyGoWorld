@@ -29,14 +29,26 @@ func NewRouter() *gin.Engine {
 			auth.POST("/logout", middleware.JWTAuth(), controller.Logout)
 		}
 
-		// 用户模块 (示例：需要鉴权)
+		// 用户模块
 		user := apiV1.Group("/user")
 		user.Use(middleware.JWTAuth())
 		{
+			user.GET("/list", controller.GetOnlineList)
+			// 其他 user 逻辑占位
 			user.GET("/me", func(c *gin.Context) {
 				uid, _ := c.Get("uid")
 				response.Success(c, gin.H{"uid": uid})
 			})
+		}
+
+		// 房间模块
+		room := apiV1.Group("/room")
+		room.Use(middleware.JWTAuth())
+		{
+			room.POST("", controller.CreateRoom)
+			room.GET("/list", controller.ListPublicRooms)
+			room.GET("/:roomId", controller.GetRoomByID)
+			room.DELETE("/:roomId", controller.CloseRoom)
 		}
 
 		// 健康检查

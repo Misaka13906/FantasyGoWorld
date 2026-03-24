@@ -8,9 +8,9 @@ import (
 )
 
 type Response struct {
-	Code e.Code      `json:"code"`
-	Msg  string      `json:"msg"`
 	Data interface{} `json:"data"`
+	Msg  string      `json:"msg"`
+	Code e.Code      `json:"code"`
 }
 
 // JSON sends a custom response with HTTP code, business code, and data

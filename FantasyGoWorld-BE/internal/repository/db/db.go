@@ -2,6 +2,7 @@ package db
 
 import (
 	"fantasy-go-world-be/internal/config"
+	"fantasy-go-world-be/internal/repository/model"
 	"fmt"
 	"log"
 
@@ -29,6 +30,11 @@ func InitDB(cfg config.Database) (*gorm.DB, error) {
 	sqlDB, err := db.DB()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get sql.DB: %w", err)
+	}
+
+	// 自动迁移表结构
+	if err := db.AutoMigrate(&model.User{}, &model.Room{}); err != nil {
+		return nil, fmt.Errorf("failed to sync database schema: %w", err)
 	}
 
 	sqlDB.SetMaxOpenConns(cfg.MaxOpenConns)
