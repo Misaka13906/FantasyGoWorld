@@ -1,34 +1,31 @@
 import axios, { type InternalAxiosRequestConfig, type AxiosResponse, type AxiosError } from 'axios';
+import { useAuthStore } from '../store/authStore';
 
 const http = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api/v1',
   timeout: 10000,
-  withCredentials: true, // 允许携带 Cookie
+  withCredentials: true,
 });
 
 // 请求拦截器
 http.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
-    const token = localStorage.getItem('access_token');
+    // 优先从 Store 获取最新 Token
+    const token = useAuthStore.getState().token;
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
   },
-  (error: any) => {
-    return Promise.reject(error);
-  }
+  (error: any) => Promise.reject(error)
 );
 
 // 响应拦截器
 http.interceptors.response.use(
   (response: AxiosResponse) => {
-    // 只要是 2xx 都在此处理（Success）
     if (response.status >= 200 && response.status < 300) {
       return response.data;
     }
-    // 实际上 axios 默认会将 2xx 以外的抛入下一个 error 闭包，
-    // 这里做显式拦截以防万一。
     return Promise.reject(new Error(`Unexpected status ${response.status}`));
   },
   async (error: AxiosError) => {
@@ -38,14 +35,19 @@ http.interceptors.response.use(
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
       try {
-        // TODO: 调用刷新 Token 接口 (Phase 2 实现)
-        // const { access_token } = await refreshAuthToken();
-        // localStorage.setItem('access_token', access_token);
-        // return http(originalRequest);
-        console.warn('Unauthorized. Token refresh not yet implemented in Phase 1.');
+        // 使用原生 axios 或独立调用，避免递归拦截
+        const res = await axios.post(`${http.defaults.baseURL}/auth/refresh`, {}, { withCredentials: true });
+        const newToken = res.data.data.access_token;
+        useAuthStore.getState().setToken(newToken);
+        
+        // 重新发起原始请求
+        if (originalRequest.headers) {
+          originalRequest.headers.Authorization = `Bearer ${newToken}`;
+        }
+        return http(originalRequest);
       } catch (refreshError) {
-        // 刷新失败，重定向到登录页
-        // window.location.href = '/login';
+        // 刷新也失败，说明全局过期，清空状态并可能需要重定向
+        useAuthStore.getState().clearAuth();
         return Promise.reject(refreshError);
       }
     }

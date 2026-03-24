@@ -40,20 +40,20 @@
 
 **后端**：
 ```
-[ ] GORM 模型（repository/model/user.go）
-[ ] Repository 层（repository/db/user.go）：CreateUser、GetByUsername、GetByID
-[ ] Auth Biz 层（biz/auth.go）：Register、Login、Refresh、Logout
-[ ] Auth Controller（api/controller/auth.go）
-[ ] 鉴权 Middleware（api/middleware/auth.go）：Header → Cookie fallback
-[ ] 接口测试：POST /auth/register、/auth/login、/auth/refresh、/auth/logout
+[x] GORM 模型（repository/model/user.go）
+[x] Repository 层（repository/db/user.go）：CreateUser、GetByUsername、GetByID
+[x] Auth Biz 层（biz/auth.go）：Register、Login、Refresh、Logout
+[x] Auth Controller（api/controller/auth.go）
+[x] 鉴权 Middleware（api/middleware/auth.go）：Header → Cookie fallback
+[x] 接口测试：POST /auth/register、/auth/login、/auth/refresh、/auth/logout
 ```
 
 **前端**：
 ```
-[ ] AuthStore（store/authStore.ts）
-[ ] Login 页面（pages/LoginPage.tsx）
-[ ] api/auth.ts（register、login、refresh、logout 请求封装）
-[ ] 401 自动刷新 token 拦截器（http.ts）
+[x] AuthStore（store/authStore.ts）
+[x] Login 页面（pages/LoginPage.tsx）
+[x] api/auth.ts（register、login、refresh、logout 请求封装）
+[x] 401 自动刷新 token 拦截器（http.ts）
 ```
 
 ---

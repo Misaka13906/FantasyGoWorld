@@ -39,8 +39,7 @@ type Redis struct {
 }
 
 type JWT struct {
-	AccessSecret  string `mapstructure:"access_secret"`
-	RefreshSecret string `mapstructure:"refresh_secret"`
+	Secret        string `mapstructure:"secret"`
 	AccessExpire  int64  `mapstructure:"access_expire"`
 	RefreshExpire int64  `mapstructure:"refresh_expire"`
 }
@@ -55,12 +54,16 @@ func LoadConfig(path string) (*Config, error) {
 		return nil, fmt.Errorf("failed to read config: %w", err)
 	}
 
-	config := &Config{}
-	if err := viper.Unmarshal(config); err != nil {
+	cfg := &Config{}
+	if err := viper.Unmarshal(cfg); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal config: %w", err)
 	}
 
-	GlobalConfig = config
+	GlobalConfig = cfg
 	log.Printf("Successfully loaded config from: %s", path)
-	return config, nil
+	return cfg, nil
+}
+
+func GetConfig() *Config {
+	return GlobalConfig
 }
