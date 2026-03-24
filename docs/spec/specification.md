@@ -20,11 +20,41 @@
 
 ### 1.2 开发流程：四阶段循环
 
-```
-① Specify   →  写清楚 PRD / 技术设计 / 接口规格
-② Plan      →  与 AI 讨论方案，让 AI 生成 implementation_plan
-③ Implement →  AI 执行实现，人类评审每次变更
-④ Validate  →  运行测试，验证行为，发现偏差立即纠正
+```mermaid
+graph TD
+    classDef doc fill:#fff3e0,stroke:#ffb74d,stroke-width:2px;
+    classDef code fill:#e8f5e9,stroke:#81c784,stroke-width:2px;
+    classDef test fill:#ffebee,stroke:#e57373,stroke-width:2px;
+    classDef commit fill:#e3f2fd,stroke:#64b5f6,stroke-width:2px;
+
+    Start((任务分配)) --> ChkArch{涉及架构/选型变更?}
+    
+    ChkArch -- Yes --> ReadLog[📖 读取 docs/decision/log.md]:::doc
+    ReadLog --> ChkPlan
+    ChkArch -- No --> ChkPlan{开始新功能?}
+    
+    ChkPlan -- Yes --> ReadPlan[📖 读取 docs/decision/plan.md]:::doc
+    ReadPlan --> ChkDesign
+    ChkPlan -- No --> ChkDesign{涉及接口/字段变更?}
+    
+    ChkDesign -- Yes --> ReadSpec[📖 读取 api-spec/data-schema/openapi]:::doc
+    ReadSpec --> UpdateSpec[✍️ 更新 docs/design/ 下的相关文档]:::doc
+    UpdateSpec --> WriteCode
+    ChkDesign -- No --> WriteCode[💻 编写业务代码与拦截器逻辑]:::code
+    
+    WriteCode --> WriteTest[💻 编写对应单元/集成测试]:::code
+    WriteTest --> RunTest[🧪 运行 lint / go test ./...]:::test
+    
+    RunTest -- "Fail (带红)" --> FixCode[💻 修复 BUG 或修正脑补问题]:::code
+    FixCode --> RunTest
+    
+    RunTest -- "Pass (全绿)" --> HumanReview{👤 人类 Review 审查}
+    HumanReview -- "被打回 (具体Bug)" --> FixCode
+    HumanReview -- "通用性建议/模式总结" --> UpdateAgentRule[✍️ 总结通用规则并查找合适的文档，持久化至对应的文档]:::doc
+    UpdateAgentRule --> FixCode
+    
+    HumanReview -- "通过 (Approve)" --> GitCommit["📦 代码+文档打包提交\n(feat/fix/docs/test: desc)"]:::commit
+    GitCommit --> End(("反馈完成"))
 ```
 
 > 复杂功能拆分为多个短循环，不要一次性让 AI 实现几百行代码。

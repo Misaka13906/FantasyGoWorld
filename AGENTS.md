@@ -96,3 +96,4 @@
 - 认证：JWT（access_token 1h + refresh_token 7d httpOnly Cookie）
 - WS 鉴权：Gin Middleware 优先读 Authorization Header，fallback 读 Cookie
 - Repository 分层：`db/`（MySQL）、`store/`（Redis 主存储，无 TTL）、`cache/`（Redis 缓存，有 TTL）
+- WS 规范：凡是涉及大厅层级消息广播/路由时，`room_id` 绝对不能使用空字符串，**必须显式使用 `"hall"` 字符串标识**。

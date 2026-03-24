@@ -59,7 +59,7 @@ components:
           description: 递增序列号，主要用于防止指令乱序
         room_id:
           type: string
-          description: UUID，空字符串表示属于全局大厅层面
+          description: 房间ID，'hall'表示属于全局大厅层面
         timestamp:
           type: integer
           format: int64

@@ -92,7 +92,7 @@
 {
   "type":      "STRING",     // 消息类型，如 "MOVE", "PROPOSAL", "CHAT"
   "seq":       100,          // 序列号，用于前端排序和防乱序
-  "room_id":   "UUID",       // 所属房间（大厅消息则空字符串）
+  "room_id":   "UUID",       // 所属房间（大厅消息则为 "hall"）
   "payload":   {},           // 具体业务数据
   "timestamp": 1709000000000
 }
