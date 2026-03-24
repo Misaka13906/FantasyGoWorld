@@ -22,17 +22,29 @@ const PublicRoute = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
+import { logout } from './api/auth';
+
 const LobbyPlaceholder = () => {
   const user = useAuthStore((s) => s.currentUser);
   const clearAuth = useAuthStore((s) => s.clearAuth);
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+    } catch(e) {
+      console.error(e);
+    } finally {
+      clearAuth();
+    }
+  };
 
   return (
     <div style={{ padding: '40px', color: 'white', background: '#1a1a2e', minHeight: '100vh' }}>
       <h1>大厅 (施工中...)</h1>
       {user && (
         <div>
-          <p>欢迎喵, {user.nickname} ({user.rank})</p>
-          <button onClick={clearAuth} style={{ padding: '8px 16px', background: '#ff4b2b', border: 'none', color: 'white', borderRadius: '4px', cursor: 'pointer' }}>
+          <p>欢迎, {user.nickname} ({user.rank})</p>
+          <button onClick={handleLogout} style={{ padding: '8px 16px', background: '#ff4b2b', border: 'none', color: 'white', borderRadius: '4px', cursor: 'pointer' }}>
             退出登录
           </button>
         </div>

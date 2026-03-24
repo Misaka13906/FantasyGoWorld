@@ -101,6 +101,11 @@ fantasy-go-world-fe/
 │   │   └── user.ts
 │   ├── App.tsx                   # 路由配置（React Router v6）
 │   └── main.tsx
+├── tests/                        # 自动化测试结构目录
+│   ├── e2e/                      # Playwright E2E/集成测试
+│   │   ├── auth.spec.ts
+│   │   └── lobby.spec.ts
+│   └── components/               # Vitest 单元与组件测试
 ├── index.html
 ├── vite.config.ts
 └── package.json
@@ -166,6 +171,8 @@ fantasy-go-world-be/
 │   │   ├── linear.go             # 线性单链处理实现 (P1)
 │   │   └── tree.go               # 树状 AST 分析实现 (P2)
 │   └── response/                 # gin 统一响应封装
+├── test/                         # 后端集成测试目录
+│   └── integration/              # 依赖真实设施（DB/Redis）的业务链路测试
 ├── migrations/                   # SQL 迁移文件（按版本命名）
 │   └── 001_init.sql
 ├── local/                   # 部署文件

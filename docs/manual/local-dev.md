@@ -23,14 +23,15 @@
 
 开发者可根据习惯选择：**Docker Compose (方案 A)** 或 **本机服务 (方案 B)**。
 
-### 💡 极简启动：直接使用本地服务 (localhost) —— 方案 B
+### 💡 极简启动：直接使用本地服务 (localhost) —— 方案 B (Windows推荐)
 如果你本地已安装并运行了 MySQL 和 Redis，这是最快的方式：
 
 1. **MySQL 准备**:
    - 确认运行在 `3306`。
-   - 创建数据库：`CREATE DATABASE fantasy_go_world CHARACTER SET utf8mb4;`。
-   - (可选) 创建专用账号并授权，或使用 root（生产不可行，本地测试自由）。
+   - 创建数据库：`CREATE DATABASE IF NOT EXISTS fantasy_go_world CHARACTER SET utf8mb4;`。
+   - (可选) 创建专用账号并授权，或使用 root（生产不可行，本地测试自由）。如本地账号：`user: go, password: go`
 2. **Redis 准备**: 确认运行在 `6379`。
+   - **Windows 用户**: 如果你使用的是 MSYS2 编译版 Redis，通过终端或者资源管理器运行你的 `redis-server.exe`。例如：`D:\tools\Redis-7.2.7-Windows-x64-msys2\redis-server.exe`
 3. **配置文件**: 复制并创建 `config.yaml`（见第 3 节）。我们将该文件中的 `host` 默认设为 `127.0.0.1`。
 
 ### 🐳 推荐方案：使用 Docker Compose —— 方案 A

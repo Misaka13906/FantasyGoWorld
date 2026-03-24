@@ -23,15 +23,15 @@ export const LoginPage: React.FC = () => {
             if (isLogin) {
                 const res = await login({ username, password });
                 setAuth(res.data.access_token, { ...res.data.user, dnd: false });
-                toast.success(`喵！欢迎回来，${res.data.user.nickname}`);
+                toast.success(`欢迎回来，${res.data.user.nickname}`);
                 navigate('/lobby');
             } else {
                 await register({ username, password, nickname, rank });
-                toast.success('注册成功！快来登录吧喵~');
+                toast.success('注册成功！快去登录吧~');
                 setIsLogin(true);
             }
         } catch (err: any) {
-            toast.error(err.message || '操作失败了喵...');
+            toast.error(err.message || '操作失败，请稍后重试');
         } finally {
             setLoading(false);
         }
@@ -76,7 +76,7 @@ export const LoginPage: React.FC = () => {
                                     value={nickname}
                                     onChange={(e) => setNickname(e.target.value)}
                                     required
-                                    placeholder="你想叫什么喵？"
+                                    placeholder="请输入昵称"
                                 />
                             </div>
                             <div className="input-group">
@@ -108,13 +108,14 @@ export const LoginPage: React.FC = () => {
 
             <style>{`
         .login-container {
-          min-height: 100vh;
+          flex: 1;
           display: flex;
           align-items: center;
           justify-content: center;
           background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
           font-family: 'Inter', system-ui, sans-serif;
           color: white;
+          padding: 20px;
         }
         .glass-card {
           background: rgba(255, 255, 255, 0.05);
@@ -124,6 +125,7 @@ export const LoginPage: React.FC = () => {
           padding: 40px;
           width: 100%;
           max-width: 400px;
+          box-sizing: border-box;
           box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
         }
         .title {

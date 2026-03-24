@@ -15,3 +15,14 @@ FantasyGoWorld-BE/dist/
 */ignore/*
 **/node_modules/
 **/.DS_Store
+
+# 前端与测试临时输出
+FantasyGoWorld-FE/dist/
+FantasyGoWorld-FE/test-results/
+FantasyGoWorld-FE/playwright-report/
+FantasyGoWorld-FE/playwright/.cache/
+FantasyGoWorld-FE/blob-report/
+FantasyGoWorld-FE/*.json
+!FantasyGoWorld-FE/package.json
+!FantasyGoWorld-FE/tsconfig*.json
+coverage/

@@ -51,12 +51,13 @@ go test -tags=integration ./test/integration/...
 ## 3. 前端测试规范 (TypeScript/React)
 
 ### 3.1 基础工具链
-- 放弃 Jest，使用与 Vite 完美集成的 **Vitest**。
-- 组件渲染与 DOM 断言使用 **React Testing Library (RTL)**。
-- 强行 Mock 后端请求用 **msw (Mock Service Worker)**。
+- **端到端与大盘集成测试**：使用 **Playwright**。由于我们重度依赖 HttpOnly Cookie 和 WebSocket，Playwright 能最真实地接拉起 Chromium 环境，不仅能验证跨页面路由守卫，而且 `async/await` 原生模型更适合未来复杂的对弈和异步时序测试。
+- **单元与 Store 测试**：放弃 Jest，使用与 Vite 完美集成的 **Vitest**。
+- **DOM 断言 / Mock**：涉及局部组件时使用 **React Testing Library (RTL)**，使用 **msw (Mock Service Worker)** 在 Service Worker 层级强行 Mock 后端请求。
 
 ### 3.2 重点测试区域
-- **状态管理 (Zustand Store)**：不用挂载组件，直接测试业务逻辑是否成立，如：`GameStore.dispatch(SyncBoardPayload)` 后，Store 内的倒计时、当前回合数和 19x19 的状态二维数组是否符合预期。
+- **大盘集成 (Playwright E2E)**：验证真实浏览器连通后的核心 Happy Path (如 注册->登录->存Cookie->跳转重定向) 及边缘流 (Token过期拦截器静默刷新行为)。
+- **状态管理 (Zustand Store)**：不用挂载组件，用 Vitest 直接测试业务逻辑是否成立，如：`GameStore.dispatch(SyncBoardPayload)` 后，Store 内的倒计时、当前回合数和 19x19 的状态二维数组是否符合预期。
 - **棋盘交互 (Board)**：通过 RTL 点击特定坐标，验证 onClick 输出给服务端的落子坐标（如将 DOM 界面的 XY 转化为 0-18 的 `x,y` 索引）是否正确。
 
 ```bash
@@ -69,6 +70,15 @@ npm run test -- --coverage
 ### 3.3 前端测试进阶规范
 - **语义化断言**：使用 `describe` 分组模块，使用 `it` 描述用例（如 `it('should render loading spinner when fetching')`）。
 - **用户视角选择器 (A11y Priority)**：在使用 RTL 时，强制优先使用 `getByRole`、`getByLabelText` 等无障碍选择器定位元素。极力避免使用依赖 UI 实现细节的 CSS 类名选择器或滥用 `data-testid`。
+
+### 3.4 跨端测试代码目录规范
+**前端 (`FantasyGoWorld-FE`)：** 统一存放于根目录下的 `tests/`。
+- `tests/e2e/`: 核心业务的 Playwright 集成测试和 E2E 测试脚本。
+- `tests/components/`: Vitest 等涉及前端状态机和组件展示的纯单元测试。
+
+**后端 (`FantasyGoWorld-BE`)：** 严格按照特性分层。
+- **纯粹函数的单测及 API 接口测试**：强制要求代码随行（例如 `auth.go` 旁边紧挨着存放 `auth_test.go`），且需要优先脱离 DB 环境。
+- **端到端的真实后端集成测试**：单独存放于后端根目录的 `test/integration/` 以便在 CI 流水线及 Docker 环境中结合依赖集中执行。
 
 ---
 
