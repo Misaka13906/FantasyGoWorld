@@ -43,9 +43,9 @@ graph TD
     ChkDesign -- No --> WriteCode[💻 编写业务代码与拦截器逻辑]:::code
     
     WriteCode --> WriteTest[💻 编写对应单元/集成测试]:::code
-    WriteTest --> RunTest[🧪 运行 lint / go test ./...]:::test
+    WriteTest --> RunTest[🧪 运行 lint / go test / playwright]:::test
     
-    RunTest -- "Fail (带红)" --> FixCode[💻 修复 BUG 或修正脑补问题]:::code
+    RunTest -- "Fail (带红)" --> FixCode[💻 修复 BUG 或修正逻辑]:::code
     FixCode --> RunTest
     
     RunTest -- "Pass (全绿)" --> HumanReview{👤 人类 Review 审查}
@@ -176,9 +176,9 @@ docs(api-spec): add auth middleware fallback strategy
 ② 运行 lint（静态分析，比测试快，优先排查低级问题）
    - 后端：golangci-lint run ./...
    - 前端：npm run lint
-③ 运行受影响模块的单元测试
+③ 运行受影响模块的单元/集成/E2E 测试
    - 后端：go test ./internal/...
-   - 前端：npm run test（待 vitest 配置后补充）
+   - 前端：npm run test + npm run test:e2e（针对 UI 变更必须跑 Playwright）
 ④ lint + 测试全部通过 → git commit
 ⑤ 任一失败 → 修复后从 ② 重跑，不允许带红的 commit
 ```

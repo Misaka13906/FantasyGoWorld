@@ -58,7 +58,7 @@
 | [`docs/spec/code-style-ts.md`](docs/spec/code-style-ts.md) | TypeScript 语言前端组件状态规范 |
 | [`docs/spec/sla.md`](docs/spec/sla.md) | API 响应时间、打点与系统可用性标准指标 |
 | [`docs/manual/local-dev.md`](docs/manual/local-dev.md) | 本地环境 Docker 起步、config.yaml 字段与常用命令 |
-| [`docs/manual/testing.md`](docs/manual/testing.md) | 全栈自动化测试策略（单测/集成/E2E）与并发压测大纲 |
+| [`docs/spec/testing.md`](docs/spec/testing.md) | 全栈自动化测试策略（单测/集成/E2E）与并发压测大纲 |
 | [`docs/manual/devops.md`](docs/manual/devops.md) | Docker 构建方案、CI/CD 与可观测性 (Metrics) 指南 |
 
 ### 2. 架构与设计 (`docs/design/`)
