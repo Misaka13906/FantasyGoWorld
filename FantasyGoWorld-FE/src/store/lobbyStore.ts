@@ -1,6 +1,8 @@
 import { create } from 'zustand';
-import { User, getOnlineUsers } from '../api/user';
-import { Room, getPublicRooms, createRoom, CreateRoomReq, closeRoom } from '../api/room';
+import type { User } from '../types/user';
+import type { Room } from '../types/room';
+import { getOnlineUsers } from '../api/user';
+import { getPublicRooms, createRoom, type CreateRoomReq, closeRoom } from '../api/room';
 
 interface LobbyState {
     onlineUsers: User[];

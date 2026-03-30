@@ -114,6 +114,12 @@ type Step = 1 | 2 | 3
 enum Status { Pending = 0, Active = 1 }
 ```
 
+### 3.4 领域实体类型的全局聚合 (DRY 原则)
+
+- **区分 DTO 与领域模型**：HTTP 接口层的入参（如 `CreateRoomReq`、`LoginReq`）或者特有的包裹结构（如 `PaginatedResponse`）属于数据传输对象（DTO），可保留在对应的 `src/api` 文件中；但核心业务实体（如 `User`、`Room`、`Game`）是贯穿 API、Store、组件、乃至 WebSocket 的全局对象。
+- **严禁内联硬编码补齐或复制粘贴**：所有全局核心业务实体**必须**收敛到 `src/types/` 目录下（例如 `src/types/user.ts`）。
+- **任何 `store`、`components` 或 `api` 文件的返回值中**，严禁使用散装定义（如 `user: { id: number, name: string }`）或私自重新声明 `interface User { ... }`，必须统一采用 `import type { User } from '@/types/user'` 引用。
+
 ---
 
 ## 4. 组件规范
@@ -215,6 +221,7 @@ const state = useGameStore()
 | `var` | 函数级作用域，行为不直观 | `const` / `let` |
 | `any` | 绕过类型检查 | `unknown` + 类型守卫 / 具体类型 |
 | `I` 前缀接口（`IUser`） | TypeScript 社区约定不加前缀 | `User`、`UserProps` |
+| 散装重写全局类型（如在 Store 重新定义 User） | 引发维护灾难并破坏模块复用 | 统一从 `src/types/xxx.ts` 引入 `import type ...` |
 | 全量 Store 订阅 | 导致无效重渲染（见 §5.4） | Selector 精准订阅 |
 | 火忘式副作用（无清理） | 内存泄漏、组件卸载后仍执行 | `useEffect` 返回清理函数 |
 | 在 JSX 里写复杂逻辑 | 可读性差 | 抽出变量或子组件 |
@@ -264,3 +271,58 @@ prettier                  # 格式化
   }
 }
 ```
+
+---
+
+## 9. 优秀开源参考与架构标杆原则（必读）
+
+本项目的前端架构深受业界优秀开源项目（如 Bulletproof React、Excalidraw、Jira Clone 等）和成文规范（如 Airbnb React Style Guide）的影响。结合本对弈系统的复杂度，在日常开发时**必须严格遵守**以下从标杆项目中提取的具体工程化原则：
+
+### 9.1 目录与功能隔离原则 (Derived from Bulletproof React)
+
+本项目业务复杂度高，不同模块的相互依赖如果不加管控，极易变成“意大利面条”。规范如下：
+1. **优先按业务领域划分 (Feature-Based Isolation)**：
+   不要将所有的 API、组件、状态混成大杂烩。例如 `Game`（对局室）和 `Lobby`（大厅）应当是彼此隔离的实体。
+2. **严格的“桶”文件暴露 (Barrel Export / Public API)**：
+   跨领域的组件或函数，必须从它所在模块的入口（如 `index.ts`）导入，**严禁直接穿透引用内部私有文件**。例如，大厅组件不可以去 `import { renderStone } from '../Game/components/utils/render'`，应当通过 `../Game` 暴露的特定接口获取。
+3. **类型就近内聚**：
+   如果某个 Type 仅为特定模块使用（如特定的 `ProposalState`），必须定义在对应业务的目录下。只有贯穿全局的核心实体（如 `User`、`Room`）才提取到顶层的全局 `types/` 文件夹。
+
+### 9.2 状态管理与数据流原则 (Derived from Zustand & React Query)
+
+传统的 Redux / Context 全局化方案已经显得笨重，关于状态的存放与流动，必须遵循：
+1. **严格区分服务端状态与客户端状态 (Server State vs Client State)**：
+   - 凡是对后端的查询（例如大厅列表、个人资料），本质上是“后端状态在前端的缓存”，由 API 请求接管。
+   - 凡是用户交互（如：折叠面板、落子预览坐标、当前输入框等），才是真正的纯 Client State，由 React 的本地 `useState` 接管。
+2. **切片管理全局状态 (Slices Pattern)**：
+   Zustand Store 不可写成巨大的单体，必须按照逻辑领域（如 `authStore`、`lobbyStore`、`gameStore`）单独切割。
+3. **极小化订阅 (Selector-Based Rendering)**：
+   任何引入全局 Store 的组件，必须显式指明依赖哪些字段。例如 `useLobbyStore(state => state.rooms)`。未写 Selector 的全量订阅会导致严重性能问题，属于违规操作。
+
+### 9.3 渲染优化层规范 (Derived from Excalidraw / Board Games)
+
+由于对弈系统涉及到棋盘渲染、密集鼠标事件和倒计时读秒，这些是 React 默认机制并不擅长的区域。必须遵循：
+1. **DOM 与图形的职责边界**：
+   静态且数量庞大的元素（如几百个交叉点、常规落子）可以考虑 Canvas 或一次性批量 SVG 渲染；但高频交互控件（如落子确认、协商弹窗、聊天框）必须依然使用 React DOM。严禁试图用 Canvas 画输入框。
+2. **乐观更新 (Optimistic UI)**：
+   所有高频指令（如落子点位）。在触发 WebSocket 发送指令后，前端 Store **必须立即呈现最终状态**（而不是等服务器确认才展现，这会有肉眼可见的卡顿）。若服务器校验失败返回错误码，则前端触发回滚机制。
+3. **逃逸 React 的渲染循环**：
+   诸如鼠标悬停时的预览落子残影（Hover Shadow），极快地产生海量 `x, y` 变更，**禁止把这些坐标存进 React State 并引发全局 Re-render**。应该直接走原生 DOM 获取坐标计算并动态写入 `ref` 节点，避开 Virtual DOM Diff。
+4. **计时器隔离**：
+   对局右上角的“读秒（GameTimer）”组件必然伴随每秒 1 帧的重绘，必须将其抽离为树状图的独立子叶组件。严禁将其写在 `GameRoomPage` 顶层，否则引发整个页面的灾难性重连。
+
+### 9.4 组件剥离与职能原则 (Derived from Jira Clone & Airbnb)
+
+1. **容器与展示分离 (Smart & Dumb Components)**：
+   凡是负责渲染长相的组件（Dumb），内部不能使用大量 Hooks 挂载到 Store 上（比如棋子 `<Stone />` 组件里不应该去 `useStore` 读取黑白状态），而是应当由外层调用者作为 Props (`color="black"`) 传给它。
+2. **内联函数克制**：
+   除了极其简单的点击事件，严禁在 JSX 渲染里大篇幅写匿名回调或直接执行高开销的方法。这些必须被提到渲染外部作为 `const handleXxx = useCallback(...)` 处理。
+3. **避免 Props Drilling**：
+   当 `Props` 透传层次大于 3 层时（例如 A 传 B 传 C 传 D），马上停止透传，改用全局 Store 或就近订阅。
+
+### 9.5 解耦优先的组件库化 (Derived from Shadcn/ui)
+
+1. **组合优于配置 (Composition over Configuration)**：
+   自己造轮子实现封装业务组件时，倾向于暴露子节点组合的能力 (`children`, `Slot`)，而不是在一个大组件里定义出 `hasLabel`、`hasIcon`、`iconPosition` 等几十个生硬开关。
+2. **样式解耦覆盖开放**：
+   所有的根级可复用组件，必须能接收并在根节点上接收 `className` prop，允许业务方在外部自由覆写尺寸和外边距，而组件底色和基本样式封闭在组件自身。

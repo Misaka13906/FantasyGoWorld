@@ -1,14 +1,6 @@
 import http from './http';
-import { User } from './user';
-
-export interface Room {
-    id: number;
-    owner_id: number;
-    description: string;
-    is_public: boolean;
-    status: number;
-    owner?: User;
-}
+import type { Room } from '../types/room';
+import type { PaginatedResponse } from '../types/api';
 
 export interface CreateRoomReq {
     description: string;
@@ -21,7 +13,7 @@ export const createRoom = async (req: CreateRoomReq) => {
 };
 
 export const getPublicRooms = async (page = 1, pageSize = 20) => {
-    return http.get<import('./user').PaginatedResponse<Room>>('/room/list', {
+    return http.get<PaginatedResponse<Room>>('/room/list', {
         params: { page, page_size: pageSize }
     });
 };

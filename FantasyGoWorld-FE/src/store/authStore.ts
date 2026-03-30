@@ -1,13 +1,5 @@
 import { create } from 'zustand';
-
-interface User {
-  id:       number;
-  username: string;
-  nickname: string;
-  elo:      number;
-  rank:     string;
-  dnd:      boolean;
-}
+import type { User } from '../types/user';
 
 interface AuthState {
   token:       string | null;

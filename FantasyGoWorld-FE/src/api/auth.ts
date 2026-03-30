@@ -1,4 +1,5 @@
 import http from './http';
+import type { User } from '../types/user';
 
 export interface RegisterReq {
   username: string;
@@ -17,13 +18,7 @@ export interface AuthRes {
   msg:  string;
   data: {
     access_token: string;
-    user: {
-      id:       number;
-      username: string;
-      nickname: string;
-      elo:      number;
-      rank:     string;
-    };
+    user: User;
   };
 }
 
