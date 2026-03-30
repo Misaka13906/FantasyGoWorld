@@ -28,9 +28,12 @@ http.interceptors.response.use(
     }
     return Promise.reject(new Error(`Unexpected status ${response.status}`));
   },
-  async (error: AxiosError) => {
+  async (error: AxiosError<any>) => {
     const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
     
+    // 提取后端返回的详细错误信息
+    const errorMsg = error.response?.data?.msg || error.message || '未知错误';
+
     // 如果是 401 且未重试过，尝试刷新 Token
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
@@ -48,10 +51,10 @@ http.interceptors.response.use(
       } catch (refreshError) {
         // 刷新也失败，说明全局过期，清空状态并可能需要重定向
         useAuthStore.getState().clearAuth();
-        return Promise.reject(refreshError);
+        return Promise.reject(new Error(errorMsg));
       }
     }
-    return Promise.reject(error);
+    return Promise.reject(new Error(errorMsg));
   }
 );
 

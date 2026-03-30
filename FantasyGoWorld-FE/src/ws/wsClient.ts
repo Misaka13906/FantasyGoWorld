@@ -54,6 +54,7 @@ class WSClient {
     this.socket.onclose = (event) => {
       console.log(`WS Connection closed: ${event.code} ${event.reason}`);
       this.cleanup();
+      this.socket = null; // 重要：断开后置空才能重新 connect
       if (!this.isClosing) {
         this.scheduleReconnect();
       }

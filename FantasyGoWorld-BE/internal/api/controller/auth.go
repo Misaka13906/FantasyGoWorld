@@ -67,7 +67,7 @@ func Refresh(c *gin.Context) {
 		return
 	}
 
-	accessToken, err := biz.RefreshToken(refreshToken)
+	accessToken, user, err := biz.RefreshToken(refreshToken)
 	if err != nil {
 		response.Error(c, http.StatusUnauthorized, e.RefreshTokenExpired, nil)
 		return
@@ -75,6 +75,7 @@ func Refresh(c *gin.Context) {
 
 	response.Success(c, gin.H{
 		"access_token": accessToken,
+		"user":         user,
 	})
 }
 

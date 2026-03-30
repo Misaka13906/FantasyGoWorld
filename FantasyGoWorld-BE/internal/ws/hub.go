@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fantasy-go-world-be/internal/repository/store"
 	"log"
+	"strconv"
 	"time"
 )
 
@@ -139,7 +140,7 @@ func (h *Hub) handleInbound(env *Envelope) {
 			room.register <- client
 
 			// 更新 Redis
-			go store.UpdateUserState(context.Background(), client.UserID, store.StatusIdle, string(req.RoomID)) // simplistic for now
+			go store.UpdateUserState(context.Background(), client.UserID, store.StatusIdle, strconv.Itoa(req.RoomID)) // simplistic for now
 		}
 
 	case MsgTypeLeaveRoom:

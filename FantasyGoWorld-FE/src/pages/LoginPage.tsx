@@ -17,8 +17,22 @@ export const LoginPage: React.FC = () => {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        setLoading(true);
 
+        // 基础校验
+        if (username.length < 4) {
+            toast.error('用户名至少需要 4 个字符');
+            return;
+        }
+        if (password.length < 6) {
+            toast.error('密码至少需要 6 个字符');
+            return;
+        }
+        if (!isLogin && nickname.length < 2) {
+            toast.error('昵称至少需要 2 个字符');
+            return;
+        }
+
+        setLoading(true);
         try {
             if (isLogin) {
                 const res = await login({ username, password });
@@ -46,7 +60,7 @@ export const LoginPage: React.FC = () => {
 
                 <form onSubmit={handleSubmit} className="auth-form">
                     <div className="input-group">
-                        <label>用户名</label>
+                        <label>用户名 (至少4位)</label>
                         <input
                             type="text"
                             value={username}
@@ -57,7 +71,7 @@ export const LoginPage: React.FC = () => {
                     </div>
 
                     <div className="input-group">
-                        <label>密码</label>
+                        <label>密码 (至少6位)</label>
                         <input
                             type="password"
                             value={password}
@@ -70,7 +84,7 @@ export const LoginPage: React.FC = () => {
                     {!isLogin && (
                         <>
                             <div className="input-group">
-                                <label>昵称</label>
+                                <label>昵称 (至少2位)</label>
                                 <input
                                     type="text"
                                     value={nickname}

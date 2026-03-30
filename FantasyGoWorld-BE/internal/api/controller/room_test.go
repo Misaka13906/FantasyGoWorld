@@ -7,7 +7,6 @@ import (
 	"fantasy-go-world-be/internal/config"
 	"fantasy-go-world-be/internal/repository/db"
 	"fantasy-go-world-be/internal/repository/model"
-	"fantasy-go-world-be/pkg/jwtauth"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -31,11 +30,6 @@ func setupRoomTestDB() {
 	sqliteDB.AutoMigrate(&model.User{}, &model.Room{})
 	db.DB = sqliteDB
 	db.CreateUser(&model.User{Username: "roomowner", PasswordHash: "x", Nickname: "Owner"})
-}
-
-func mockAuthCookie(uid uint) *http.Cookie {
-	token, _ := jwtauth.GenerateToken(uid, "test-secret", 3600)
-	return &http.Cookie{Name: "access_token", Value: token}
 }
 
 func TestRoomEndpoints(t *testing.T) {

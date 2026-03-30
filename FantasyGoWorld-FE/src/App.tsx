@@ -28,7 +28,8 @@ const PublicRoute = ({ children }: { children: React.ReactNode }) => {
 // Removed LobbyPlaceholder component
 
 export const App: React.FC = () => {
-  const setToken = useAuthStore((s) => s.setToken);
+  const setAuth = useAuthStore((s) => s.setAuth);
+  const token = useAuthStore((s) => s.token);
 
   // App Mount: 尝试静默续期
   useEffect(() => {
@@ -37,7 +38,7 @@ export const App: React.FC = () => {
         const baseURL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api/v1';
         const res = await axios.post(`${baseURL}/auth/refresh`, {}, { withCredentials: true });
         if (res.data.code === 20000) {
-          setToken(res.data.data.access_token);
+          setAuth(res.data.data.access_token, res.data.data.user);
         }
       } catch (err) {
         // 静默续期失败很正常（未登录或 Cookie 过期）
@@ -45,10 +46,9 @@ export const App: React.FC = () => {
       }
     };
     silentRefresh();
-  }, [setToken]);
+  }, [setAuth]);
 
   // WS lifecycle
-  const token = useAuthStore((s) => s.token);
   useEffect(() => {
     if (token) {
       wsClient.connect();

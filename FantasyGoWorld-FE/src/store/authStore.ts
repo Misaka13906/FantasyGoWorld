@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 import type { User } from '../types/user';
 
 interface AuthState {
@@ -11,12 +12,19 @@ interface AuthState {
   clearAuth:   () => void;
 }
 
-export const useAuthStore = create<AuthState>((set) => ({
-  token:       null,
-  currentUser: null,
-  status:      'idle',
-  setAuth: (token, user) => set({ token, currentUser: user }),
-  setToken: (token) => set({ token }),
-  setStatus: (status) => set({ status }),
-  clearAuth: () => set({ token: null, currentUser: null, status: 'idle' }),
-}));
+export const useAuthStore = create<AuthState>()(
+  persist(
+    (set) => ({
+      token:       null,
+      currentUser: null,
+      status:      'idle',
+      setAuth: (token, user) => set({ token, currentUser: user }),
+      setToken: (token) => set({ token }),
+      setStatus: (status) => set({ status }),
+      clearAuth: () => set({ token: null, currentUser: null, status: 'idle' }),
+    }),
+    {
+      name: 'fgw-auth-storage', // 存储在 localStorage 的 key
+    }
+  )
+);

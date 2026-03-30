@@ -23,6 +23,9 @@ type UserState struct {
 
 // UpdateUserState 更新用户在 Redis 中的装态片段
 func UpdateUserState(ctx context.Context, userID int, status, roomID string) error {
+	if Redis == nil {
+		return nil
+	}
 	key := fmt.Sprintf("user_state:%d", userID)
 	return Redis.HSet(ctx, key, map[string]interface{}{
 		"status":      status,
@@ -33,6 +36,9 @@ func UpdateUserState(ctx context.Context, userID int, status, roomID string) err
 
 // GetUserState 获取用户的状态
 func GetUserState(ctx context.Context, userID int) (*UserState, error) {
+	if Redis == nil {
+		return nil, nil
+	}
 	key := fmt.Sprintf("user_state:%d", userID)
 
 	res, err := Redis.HGetAll(ctx, key).Result()
@@ -55,6 +61,9 @@ func GetUserState(ctx context.Context, userID int) (*UserState, error) {
 
 // DeleteUserState 删除用户状态（例如下线后结束宽限期清空）
 func DeleteUserState(ctx context.Context, userID int) error {
+	if Redis == nil {
+		return nil
+	}
 	key := fmt.Sprintf("user_state:%d", userID)
 	return Redis.Del(ctx, key).Err()
 }

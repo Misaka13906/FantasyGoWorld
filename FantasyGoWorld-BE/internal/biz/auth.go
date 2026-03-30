@@ -95,13 +95,20 @@ func Login(req *LoginRequest) (*LoginResponse, error) {
 }
 
 // RefreshToken 刷新 Token
-func RefreshToken(oldRefreshToken string) (string, error) {
+func RefreshToken(oldRefreshToken string) (string, *model.User, error) {
 	cfg := config.GetConfig()
 	claims, err := jwtauth.ParseToken(oldRefreshToken, cfg.JWT.Secret)
 	if err != nil {
-		return "", err
+		return "", nil, err
+	}
+
+	// 加载用户信息
+	user, err := db.GetUserByID(claims.UserID)
+	if err != nil {
+		return "", nil, err
 	}
 
 	// 重新生成 Access Token
-	return jwtauth.GenerateToken(claims.UserID, cfg.JWT.Secret, cfg.JWT.AccessExpire)
+	token, err := jwtauth.GenerateToken(claims.UserID, cfg.JWT.Secret, cfg.JWT.AccessExpire)
+	return token, user, err
 }
