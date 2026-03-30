@@ -19,6 +19,10 @@ func NewRouter() *gin.Engine {
 	})
 
 	apiV1 := r.Group("/api/v1")
+
+	// WebSocket 入口，挂载 JWT 鉴权中间件 (由于 Header 读不到会自动降级去读 Cookie 里的 access_token)
+	r.GET("/ws", middleware.JWTAuth(), controller.ServeWS)
+
 	{
 		// 认证模块
 		auth := apiV1.Group("/auth")

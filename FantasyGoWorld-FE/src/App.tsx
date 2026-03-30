@@ -4,6 +4,7 @@ import { LoginPage } from './pages/LoginPage';
 import { LobbyPage } from './pages/LobbyPage';
 import { useAuthStore } from './store/authStore';
 import axios from 'axios';
+import { wsClient } from './ws/wsClient';
 
 // ProtectedRoute: 拦截未登录请求
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -45,6 +46,17 @@ export const App: React.FC = () => {
     };
     silentRefresh();
   }, [setToken]);
+
+  // WS lifecycle
+  const token = useAuthStore((s) => s.token);
+  useEffect(() => {
+    if (token) {
+      wsClient.connect();
+    } else {
+      wsClient.disconnect();
+    }
+    return () => wsClient.disconnect();
+  }, [token]);
 
   return (
     <BrowserRouter>

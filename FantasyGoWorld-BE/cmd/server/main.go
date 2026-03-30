@@ -6,6 +6,7 @@ import (
 	"fantasy-go-world-be/internal/config"
 	"fantasy-go-world-be/internal/repository/db"
 	"fantasy-go-world-be/internal/repository/store"
+	"fantasy-go-world-be/internal/ws"
 	"fmt"
 	"log"
 	"net/http"
@@ -42,10 +43,14 @@ func main() {
 		log.Fatalf("Critical Error: InitRedis failed: %v", err)
 	}
 
-	// 5. Initialize Router
+	// 5. Initialize WS Hub
+	hub := ws.InitHub()
+	go hub.Run()
+
+	// 6. Initialize Router
 	r := router.NewRouter()
 
-	// 6. Start server with graceful shutdown
+	// 7. Start server with graceful shutdown
 	srv := &http.Server{
 		Addr:    fmt.Sprintf(":%d", cfg.Server.Port),
 		Handler: r,

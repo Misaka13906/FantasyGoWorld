@@ -88,17 +88,17 @@
 
 **后端**：
 ```
-[ ] Envelope 定义（ws/envelope.go）
-[ ] Client 结构体（ws/client.go）：ReadPump、WritePump、心跳检测
-[ ] Hub（ws/hub.go）：Register/Unregister、连接映射、心跳扫描
-[ ] WS 升级入口（router 注册 GET /ws）
-[ ] Redis Store：user_state（store/user_state.go）
+[x] Envelope 定义（ws/envelope.go）
+[x] Client 结构体（ws/client.go）：ReadPump、WritePump、心跳检测
+[x] Hub（ws/hub.go）：Register/Unregister、连接映射、心跳扫描
+[x] WS 升级入口（router 注册 GET /ws）
+[x] Redis Store：user_state（store/user_state.go）
 ```
 
 **前端**：
 ```
-[ ] wsClient.ts：连接管理、心跳发送、自动重连
-[ ] App.tsx 登录后建立 WS 连接
+[x] wsClient.ts：连接管理、心跳发送、自动重连
+[x] App.tsx 登录后建立 WS 连接
 ```
 
 ---

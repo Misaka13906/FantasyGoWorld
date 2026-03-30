@@ -44,14 +44,16 @@ func ParseToken(token string, secret string) (*Claims, error) {
 	})
 
 	if err != nil {
-		if errors.Is(err, jwt.ErrTokenExpired) {
+		switch {
+		case errors.Is(err, jwt.ErrTokenExpired):
 			return nil, ErrTokenExpired
-		} else if errors.Is(err, jwt.ErrTokenMalformed) {
+		case errors.Is(err, jwt.ErrTokenMalformed):
 			return nil, ErrTokenMalformed
-		} else if errors.Is(err, jwt.ErrTokenNotValidYet) {
+		case errors.Is(err, jwt.ErrTokenNotValidYet):
 			return nil, ErrTokenNotYetValid
+		default:
+			return nil, ErrTokenInvalid
 		}
-		return nil, ErrTokenInvalid
 	}
 
 	if tokenClaims != nil {
